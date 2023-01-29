@@ -12,7 +12,7 @@ export interface RnnoiseModule extends EmscriptenModule {
 }
 
 // rnnoise only recv 480 samples
-const RNNOISE_SAMPLE_NUM = 480;
+export const RNNOISE_SAMPLE_NUM = 480;
 // 32-bit => 4-bytes
 const RNNOISE_BUFFER_SIZE = RNNOISE_SAMPLE_NUM * (32 / 8);
 
