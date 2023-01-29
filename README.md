@@ -1,6 +1,6 @@
 # noise-suppression-util
 
-noise uppression util for web based on [rnnoise](https://github.com/xiph/rnnoise.git).
+noise suppression util for web based on [rnnoise](https://github.com/xiph/rnnoise.git).
 
 ## Build
 
@@ -9,8 +9,7 @@ noise uppression util for web based on [rnnoise](https://github.com/xiph/rnnoise
 We suggest to build inside a docker container (refer to [Dockerfile](./Dockerfile)).
 
 ```bash
-git clone https://github.com/Chatog/noise-suppression-util.git
-cd noise-suppression-tuil
+cd noise-suppression-util/build
 git clone https://github.com/xiph/rnnoise.git
 ./build.sh
 ```
