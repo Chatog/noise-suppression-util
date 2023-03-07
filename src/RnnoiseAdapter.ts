@@ -1,5 +1,5 @@
 // @ts-ignore
-import createRNNWasmModuleSync from "../build/rnnoise";
+import initRNNoiseModule from "../build/rnnoise";
 
 // RnnoiseModule API
 export interface RnnoiseModule extends EmscriptenModule {
@@ -26,7 +26,7 @@ export class RnnoiseAdapter {
 
   constructor() {
     try {
-      this._rnnoiseModule = createRNNWasmModuleSync() as RnnoiseModule;
+      this._rnnoiseModule = initRNNoiseModule() as RnnoiseModule;
 
       this._rnnoiseBuffer = this._rnnoiseModule._malloc(RNNOISE_BUFFER_SIZE);
       this._rnnoiseBufferIndex = this._rnnoiseBuffer >> 2;

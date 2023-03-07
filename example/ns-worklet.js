@@ -1,11 +1,11 @@
-var createRNNWasmModuleSync = (() => {
+var initRNNoiseModule = (() => {
   var _scriptDir = import.meta.url;
   
   return (
-function(createRNNWasmModuleSync) {
-  createRNNWasmModuleSync = createRNNWasmModuleSync || {};
+function(initRNNoiseModule) {
+  initRNNoiseModule = initRNNoiseModule || {};
 
-var Module = typeof createRNNWasmModuleSync != "undefined" ? createRNNWasmModuleSync : {};
+var Module = typeof initRNNoiseModule != "undefined" ? initRNNoiseModule : {};
 
 var readyPromiseResolve, readyPromiseReject;
 
@@ -453,7 +453,7 @@ if (Module["preInit"]) {
 run();
 
 
-  return createRNNWasmModuleSync
+  return initRNNoiseModule
 }
 );
 })();
@@ -466,7 +466,7 @@ const RNNOISE_BUFFER_SIZE = RNNOISE_SAMPLE_NUM * (32 / 8);
 class RnnoiseAdapter {
     constructor() {
         try {
-            this._rnnoiseModule = createRNNWasmModuleSync();
+            this._rnnoiseModule = initRNNoiseModule();
             this._rnnoiseBuffer = this._rnnoiseModule._malloc(RNNOISE_BUFFER_SIZE);
             this._rnnoiseBufferIndex = this._rnnoiseBuffer >> 2;
             if (!this._rnnoiseBuffer) {

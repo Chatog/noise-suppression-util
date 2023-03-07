@@ -1,12 +1,12 @@
 
-var createRNNWasmModuleSync = (() => {
+var initRNNoiseModule = (() => {
   var _scriptDir = import.meta.url;
   
   return (
-function(createRNNWasmModuleSync) {
-  createRNNWasmModuleSync = createRNNWasmModuleSync || {};
+function(initRNNoiseModule) {
+  initRNNoiseModule = initRNNoiseModule || {};
 
-var Module = typeof createRNNWasmModuleSync != "undefined" ? createRNNWasmModuleSync : {};
+var Module = typeof initRNNoiseModule != "undefined" ? initRNNoiseModule : {};
 
 var readyPromiseResolve, readyPromiseReject;
 
@@ -532,8 +532,8 @@ if (Module["preInit"]) {
 run();
 
 
-  return createRNNWasmModuleSync
+  return initRNNoiseModule
 }
 );
 })();
-export default createRNNWasmModuleSync;
+export default initRNNoiseModule;

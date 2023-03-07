@@ -11,7 +11,7 @@ cd rnnoise
 ./autogen.sh
 
 # not compile examples and doc
-emconfigure ./configure --disable-examples --disable-doc
+emconfigure ./configure --enable-static=no --disable-examples --disable-doc
 
 emmake make clean
 # build rnnoise (show verbose)
@@ -24,7 +24,21 @@ if [ ! -f ".libs/librnnoise.so" ]; then
 fi
 
 # build wasm target
-emcc -g2 -s MALLOC=emmalloc -s ALLOW_MEMORY_GROWTH=1 -s ENVIRONMENT="web,worker" -s EXPORT_ES6=1 -s USE_ES6_IMPORT_META=1 -s MODULARIZE=1 -s SINGLE_FILE=1 -s WASM_ASYNC_COMPILATION=0 -s EXPORT_NAME=${EXPORT_NAME} -s EXPORTED_FUNCTIONS="${EXPORTED_FUNCTIONS}" .libs/librnnoise.so -o ${TARGET_NAME}
+emcc \
+    ${OPTIMIZE} \
+    -g2 \
+    -s ALLOW_MEMORY_GROWTH=1 \
+    -s MALLOC=emmalloc \
+    -s MODULARIZE=1 \
+    -s ENVIRONMENT="web,worker" \
+    -s EXPORT_ES6=1 \
+    -s USE_ES6_IMPORT_META=1 \
+    -s WASM_ASYNC_COMPILATION=0 \
+    -s SINGLE_FILE=1 \
+    -s EXPORT_NAME=${EXPORT_NAME} \
+    -s EXPORTED_FUNCTIONS="${EXPORTED_FUNCTIONS}" \
+    .libs/librnnoise.so \
+    -o ./${TARGET_NAME}
 
 # check if target file exists
 if [ ! -f ${TARGET_NAME} ]; then
