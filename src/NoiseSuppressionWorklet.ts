@@ -1,4 +1,4 @@
-import { RnnoiseAdapter, RNNOISE_SAMPLE_NUM } from "./RNNoiseAdapter";
+import { RnnoiseAdapter, RNNOISE_SAMPLE_NUM } from "./RnnoiseAdapter";
 
 const WEB_AUDIO_SAMPLE_NUM = 128;
 
@@ -48,7 +48,7 @@ class CircularBuffer {
     if (this._pushPtr - this._processedPtr >= this._processableSize) {
       const dataToProcess = this._data.subarray(
         this._processedPtr,
-        this._processableSize
+        this._processedPtr + this._processableSize
       );
       this._processFunction(dataToProcess);
       // advance _processedPtr
@@ -70,7 +70,7 @@ class CircularBuffer {
     if (this._dataCanPull >= this._pushAndPullSize) {
       const processedData = this._data.subarray(
         this._pullPtr,
-        this._pushAndPullSize
+        this._pullPtr + this._pushAndPullSize
       );
       this._dataCanPull -= this._pushAndPullSize;
       // advance _pullPtr

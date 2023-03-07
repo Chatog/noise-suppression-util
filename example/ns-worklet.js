@@ -1,4 +1,3 @@
-
 var createRNNWasmModuleSync = (() => {
   var _scriptDir = import.meta.url;
   
@@ -17,19 +16,11 @@ Module["ready"] = new Promise(function(resolve, reject) {
 
 var moduleOverrides = Object.assign({}, Module);
 
-var arguments_ = [];
-
-var thisProgram = "./this.program";
-
-var quit_ = (status, toThrow) => {
- throw toThrow;
-};
-
 var ENVIRONMENT_IS_WEB = typeof window == "object";
 
 var ENVIRONMENT_IS_WORKER = typeof importScripts == "function";
 
-var ENVIRONMENT_IS_NODE = typeof process == "object" && typeof process.versions == "object" && typeof process.versions.node == "string";
+typeof process == "object" && typeof process.versions == "object" && typeof process.versions.node == "string";
 
 var scriptDirectory = "";
 
@@ -40,7 +31,7 @@ function locateFile(path) {
  return scriptDirectory + path;
 }
 
-var read_, readAsync, readBinary, setWindowTitle;
+var readBinary;
 
 if (ENVIRONMENT_IS_WEB || ENVIRONMENT_IS_WORKER) {
  if (ENVIRONMENT_IS_WORKER) {
@@ -57,20 +48,6 @@ if (ENVIRONMENT_IS_WEB || ENVIRONMENT_IS_WORKER) {
   scriptDirectory = "";
  }
  {
-  read_ = url => {
-   try {
-    var xhr = new XMLHttpRequest();
-    xhr.open("GET", url, false);
-    xhr.send(null);
-    return xhr.responseText;
-   } catch (err) {
-    var data = tryParseAsDataURI(url);
-    if (data) {
-     return intArrayToString(data);
-    }
-    throw err;
-   }
-  };
   if (ENVIRONMENT_IS_WORKER) {
    readBinary = url => {
     try {
@@ -88,30 +65,10 @@ if (ENVIRONMENT_IS_WEB || ENVIRONMENT_IS_WORKER) {
     }
    };
   }
-  readAsync = (url, onload, onerror) => {
-   var xhr = new XMLHttpRequest();
-   xhr.open("GET", url, true);
-   xhr.responseType = "arraybuffer";
-   xhr.onload = () => {
-    if (xhr.status == 200 || xhr.status == 0 && xhr.response) {
-     onload(xhr.response);
-     return;
-    }
-    var data = tryParseAsDataURI(url);
-    if (data) {
-     onload(data.buffer);
-     return;
-    }
-    onerror();
-   };
-   xhr.onerror = onerror;
-   xhr.send(null);
-  };
  }
- setWindowTitle = title => document.title = title;
-} else {}
+}
 
-var out = Module["print"] || console.log.bind(console);
+Module["print"] || console.log.bind(console);
 
 var err = Module["printErr"] || console.warn.bind(console);
 
@@ -119,17 +76,17 @@ Object.assign(Module, moduleOverrides);
 
 moduleOverrides = null;
 
-if (Module["arguments"]) arguments_ = Module["arguments"];
+if (Module["arguments"]) Module["arguments"];
 
-if (Module["thisProgram"]) thisProgram = Module["thisProgram"];
+if (Module["thisProgram"]) Module["thisProgram"];
 
-if (Module["quit"]) quit_ = Module["quit"];
+if (Module["quit"]) Module["quit"];
 
 var wasmBinary;
 
 if (Module["wasmBinary"]) wasmBinary = Module["wasmBinary"];
 
-var noExitRuntime = Module["noExitRuntime"] || true;
+Module["noExitRuntime"] || true;
 
 if (typeof WebAssembly != "object") {
  abort("no native wasm support detected");
@@ -139,29 +96,21 @@ var wasmMemory;
 
 var ABORT = false;
 
-var EXITSTATUS;
-
-function assert(condition, text) {
- if (!condition) {
-  abort(text);
- }
-}
-
-var buffer, HEAP8, HEAPU8, HEAP16, HEAPU16, HEAP32, HEAPU32, HEAPF32, HEAPF64;
+var buffer, HEAPU8;
 
 function updateGlobalBufferAndViews(buf) {
  buffer = buf;
- Module["HEAP8"] = HEAP8 = new Int8Array(buf);
- Module["HEAP16"] = HEAP16 = new Int16Array(buf);
- Module["HEAP32"] = HEAP32 = new Int32Array(buf);
+ Module["HEAP8"] = new Int8Array(buf);
+ Module["HEAP16"] = new Int16Array(buf);
+ Module["HEAP32"] = new Int32Array(buf);
  Module["HEAPU8"] = HEAPU8 = new Uint8Array(buf);
- Module["HEAPU16"] = HEAPU16 = new Uint16Array(buf);
- Module["HEAPU32"] = HEAPU32 = new Uint32Array(buf);
- Module["HEAPF32"] = HEAPF32 = new Float32Array(buf);
- Module["HEAPF64"] = HEAPF64 = new Float64Array(buf);
+ Module["HEAPU16"] = new Uint16Array(buf);
+ Module["HEAPU32"] = new Uint32Array(buf);
+ Module["HEAPF32"] = new Float32Array(buf);
+ Module["HEAPF64"] = new Float64Array(buf);
 }
 
-var INITIAL_MEMORY = Module["INITIAL_MEMORY"] || 16777216;
+Module["INITIAL_MEMORY"] || 16777216;
 
 var wasmTable;
 
@@ -170,8 +119,6 @@ var __ATPRERUN__ = [];
 var __ATINIT__ = [];
 
 var __ATPOSTRUN__ = [];
-
-var runtimeInitialized = false;
 
 function preRun() {
  if (Module["preRun"]) {
@@ -184,7 +131,6 @@ function preRun() {
 }
 
 function initRuntime() {
- runtimeInitialized = true;
  callRuntimeCallbacks(__ATINIT__);
 }
 
@@ -212,8 +158,6 @@ function addOnPostRun(cb) {
 
 var runDependencies = 0;
 
-var runDependencyWatcher = null;
-
 var dependenciesFulfilled = null;
 
 function addRunDependency(id) {
@@ -229,10 +173,6 @@ function removeRunDependency(id) {
   Module["monitorRunDependencies"](runDependencies);
  }
  if (runDependencies == 0) {
-  if (runDependencyWatcher !== null) {
-   clearInterval(runDependencyWatcher);
-   runDependencyWatcher = null;
-  }
   if (dependenciesFulfilled) {
    var callback = dependenciesFulfilled;
    dependenciesFulfilled = null;
@@ -250,7 +190,6 @@ function abort(what) {
  what = "Aborted(" + what + ")";
  err(what);
  ABORT = true;
- EXITSTATUS = 1;
  what += ". Build with -sASSERTIONS for more info.";
  var e = new WebAssembly.RuntimeError(what);
  readyPromiseReject(e);
@@ -320,9 +259,9 @@ function createWasm() {
   updateGlobalBufferAndViews(wasmMemory.buffer);
   wasmTable = Module["asm"]["k"];
   addOnInit(Module["asm"]["d"]);
-  removeRunDependency("wasm-instantiate");
+  removeRunDependency();
  }
- addRunDependency("wasm-instantiate");
+ addRunDependency();
  if (Module["instantiateWasm"]) {
   try {
    var exports = Module["instantiateWasm"](info, receiveInstance);
@@ -397,23 +336,6 @@ function _emscripten_resize_heap(requestedSize) {
  return false;
 }
 
-var ASSERTIONS = false;
-
-function intArrayToString(array) {
- var ret = [];
- for (var i = 0; i < array.length; i++) {
-  var chr = array[i];
-  if (chr > 255) {
-   if (ASSERTIONS) {
-    assert(false, "Character code " + chr + " (" + String.fromCharCode(chr) + ")  at offset " + i + " not in 0x00-0xFF.");
-   }
-   chr &= 255;
-  }
-  ret.push(String.fromCharCode(chr));
- }
- return ret.join("");
-}
-
 var decodeBase64 = typeof atob == "function" ? atob : function(input) {
  var keyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
  var output = "";
@@ -467,19 +389,19 @@ var asmLibraryArg = {
 
 var asm = createWasm();
 
-var ___wasm_call_ctors = Module["___wasm_call_ctors"] = asm["d"];
+Module["___wasm_call_ctors"] = asm["d"];
 
-var _rnnoise_init = Module["_rnnoise_init"] = asm["e"];
+Module["_rnnoise_init"] = asm["e"];
 
-var _rnnoise_create = Module["_rnnoise_create"] = asm["f"];
+Module["_rnnoise_create"] = asm["f"];
 
-var _malloc = Module["_malloc"] = asm["g"];
+Module["_malloc"] = asm["g"];
 
-var _rnnoise_destroy = Module["_rnnoise_destroy"] = asm["h"];
+Module["_rnnoise_destroy"] = asm["h"];
 
-var _free = Module["_free"] = asm["i"];
+Module["_free"] = asm["i"];
 
-var _rnnoise_process_frame = Module["_rnnoise_process_frame"] = asm["j"];
+Module["_rnnoise_process_frame"] = asm["j"];
 
 var calledRun;
 
@@ -489,7 +411,6 @@ dependenciesFulfilled = function runCaller() {
 };
 
 function run(args) {
- args = args || arguments_;
  if (runDependencies > 0) {
   return;
  }
@@ -536,4 +457,168 @@ run();
 }
 );
 })();
-export default createRNNWasmModuleSync;
+
+// @ts-ignore
+// rnnoise only recv 480 samples
+const RNNOISE_SAMPLE_NUM = 480;
+// 32-bit => 4-bytes
+const RNNOISE_BUFFER_SIZE = RNNOISE_SAMPLE_NUM * (32 / 8);
+class RnnoiseAdapter {
+    constructor() {
+        try {
+            this._rnnoiseModule = createRNNWasmModuleSync();
+            this._rnnoiseBuffer = this._rnnoiseModule._malloc(RNNOISE_BUFFER_SIZE);
+            this._rnnoiseBufferIndex = this._rnnoiseBuffer >> 2;
+            if (!this._rnnoiseBuffer) {
+                throw Error("rnnoise module malloc error");
+            }
+            this._rnnoiseContext = this._rnnoiseModule._rnnoise_create();
+        }
+        catch (e) {
+            this.clean();
+            throw e;
+        }
+    }
+    /**
+     * process raw frame to denoised frame in place
+     * @param frame  480 samples, 32-bit
+     */
+    process(frame) {
+        if (!this._rnnoiseModule ||
+            !this._rnnoiseBufferIndex ||
+            !this._rnnoiseContext ||
+            !this._rnnoiseBuffer)
+            return;
+        // convert 32-bit raw samples to 16-bit for rnnoise
+        for (let i = 0; i < RNNOISE_SAMPLE_NUM; ++i) {
+            this._rnnoiseModule.HEAPF32[this._rnnoiseBufferIndex + i] = bit_32_to_16(frame[i]);
+        }
+        // use _rnnoiseBuffer as input and also output
+        this._rnnoiseModule._rnnoise_process_frame(this._rnnoiseContext, this._rnnoiseBuffer, this._rnnoiseBuffer);
+        // convert 16-bit denoised samples to 32-bit and copy back
+        for (let i = 0; i < RNNOISE_SAMPLE_NUM; ++i) {
+            frame[i] = bit_16_to_32(this._rnnoiseModule.HEAPF32[this._rnnoiseBufferIndex + i]);
+        }
+    }
+    /**
+     * clean memory
+     */
+    clean() {
+        if (!this._rnnoiseModule) {
+            return;
+        }
+        if (this._rnnoiseBuffer) {
+            this._rnnoiseModule._free(this._rnnoiseBuffer);
+            this._rnnoiseBuffer = undefined;
+            this._rnnoiseBufferIndex = undefined;
+        }
+        if (this._rnnoiseContext) {
+            this._rnnoiseModule._rnnoise_destroy(this._rnnoiseContext);
+            this._rnnoiseContext = undefined;
+        }
+    }
+}
+const SQUARE_2_15 = Math.pow(2, 15);
+/**
+ * @param raw 32-bit number
+ * @returns 16-bit number
+ */
+function bit_32_to_16(raw) {
+    return raw * SQUARE_2_15;
+}
+/**
+ * @param raw 16-bit number
+ * @returns 32-bit number
+ */
+function bit_16_to_32(raw) {
+    return raw / SQUARE_2_15;
+}
+
+const WEB_AUDIO_SAMPLE_NUM = 128;
+function gcd(n1, n2) {
+    const min = n1 > n2 ? n2 : n1;
+    const max = n1 > n2 ? n1 : n2;
+    if (max % min === 0)
+        return min;
+    return gcd(max % min, min);
+}
+function lcm(n1, n2) {
+    return (n1 / gcd(n1, n2)) * n2;
+}
+class CircularBuffer {
+    constructor(pushAndPullSize, processableSize, processFunction) {
+        this._pushPtr = 0;
+        this._pullPtr = 0;
+        this._processedPtr = 0;
+        this._dataCanPull = 0;
+        this._pushAndPullSize = pushAndPullSize;
+        this._processableSize = processableSize;
+        this._processFunction = processFunction;
+        // use lcm to avoid cut-in-middle
+        this._dataSize = lcm(pushAndPullSize, processableSize);
+        this._data = new Float32Array(this._dataSize);
+    }
+    push(input) {
+        // from _pushPtr, copy data
+        this._data.set(input, this._pushPtr);
+        // advance _pushPtr
+        this._pushPtr += this._pushAndPullSize;
+        // if has enough data to process, process in place
+        if (this._pushPtr - this._processedPtr >= this._processableSize) {
+            const dataToProcess = this._data.subarray(this._processedPtr, this._processedPtr + this._processableSize);
+            this._processFunction(dataToProcess);
+            // advance _processedPtr
+            this._processedPtr += this._processableSize;
+            // more data can be pull
+            this._dataCanPull += this._processableSize;
+        }
+        // if arrive at the tail, start from the head
+        // _pushPtr and _processedPtr always arrive at the same time!!!
+        if (this._pushPtr === this._dataSize) {
+            this._pushPtr = 0;
+            this._processedPtr = 0;
+        }
+    }
+    pull() {
+        // enough data can be pull
+        if (this._dataCanPull >= this._pushAndPullSize) {
+            const processedData = this._data.subarray(this._pullPtr, this._pullPtr + this._pushAndPullSize);
+            this._dataCanPull -= this._pushAndPullSize;
+            // advance _pullPtr
+            this._pullPtr += this._pushAndPullSize;
+            if (this._pullPtr === this._dataSize)
+                this._pullPtr = 0;
+            return processedData;
+        }
+        return null;
+    }
+}
+class NoiseSuppressionWorklet extends AudioWorkletProcessor {
+    constructor() {
+        super();
+        this._rnnoiseAdapter = new RnnoiseAdapter();
+        this._circularBuffer = new CircularBuffer(WEB_AUDIO_SAMPLE_NUM, RNNOISE_SAMPLE_NUM, (data) => {
+            this._rnnoiseAdapter.process(data);
+        });
+    }
+    /**
+     * https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process
+     * @param input input contains 1 or 2 channels; each channel contains 128 samples; each sample is 32-bit in [-1, 1]
+     * @param output same as input, default all 0, should be filled
+     */
+    process(input, output) {
+        // only process one channel
+        const inputSingleChannelAudioData = input[0][0];
+        const outputSingleChannelAudioData = output[0][0];
+        // push raw data to _circularBuffer
+        this._circularBuffer.push(inputSingleChannelAudioData);
+        // try to pull denoised data from _circularBuffer
+        const denoisedAudioData = this._circularBuffer.pull();
+        // if data is available, copy it to output, otherwise do nothing
+        if (denoisedAudioData) {
+            outputSingleChannelAudioData.set(denoisedAudioData, 0);
+        }
+        return true;
+    }
+}
+registerProcessor("NoiseSuppressionWorklet", NoiseSuppressionWorklet);

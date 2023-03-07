@@ -1,0 +1,118 @@
+<html>
+  <head>
+    <title>Noise-Suppression-Util Example</title>
+  </head>
+  <body>
+    <div>
+      <button id="start">START RECORD</button>
+      <button id="stop">STOP RECORD</button>
+    </div>
+    <div>
+      <div>Raw Audio</div>
+      <audio id="raw" controls></audio>
+    </div>
+    <div>
+      <div>Denoised Audio</div>
+      <audio id="denoised" controls></audio>
+    </div>
+
+    <script type="module">
+      import { NoiseSuppressionUtil as NSUtil } from "./ns-util.js";
+      window.ns = null;
+
+      window.rawStream = null;
+      window.denoisedStream = null;
+
+      window.rawBlob = null;
+      window.rawBlobUrl = null;
+      window.denoisedBlob = null;
+      window.denoisedBlobUrl = null;
+
+      window.rawRecorder = null;
+      window.denoisedRecorder = null;
+      window.rawBlobs = [];
+      window.denoisedBlobs = [];
+
+      window.onload = () => {
+        const startBtn = document.getElementById("start");
+        const stopBtn = document.getElementById("stop");
+        const rawAudio = document.getElementById("raw");
+        const denoisedAudio = document.getElementById("denoised");
+
+        startBtn.onclick = startRecord;
+        stopBtn.onclick = stopRecord;
+
+        initStream();
+        function initStream() {
+          navigator.mediaDevices
+            .getUserMedia({
+              video: false,
+              audio: true,
+            })
+            .then((ms) => {
+              rawStream = ms;
+              ns = new NSUtil("./ns-worklet.js");
+              ns.start(rawStream).then((ds) => {
+                denoisedStream = ds;
+              });
+            });
+        }
+
+        function startRecord() {
+          cleanLastRecord();
+
+          rawRecorder = new MediaRecorder(rawStream);
+          rawRecorder.ondataavailable = (e) => {
+            if (e.data.size > 0) {
+              rawBlobs.push(e.data);
+            }
+          };
+          rawRecorder.onstop = () => {
+            rawBlob = new Blob(rawBlobs);
+            rawBlobUrl = URL.createObjectURL(rawBlob);
+            rawAudio.src = rawBlobUrl;
+          };
+          rawRecorder.start();
+
+          denoisedRecorder = new MediaRecorder(denoisedStream);
+          denoisedRecorder.ondataavailable = (e) => {
+            if (e.data.size > 0) {
+              denoisedBlobs.push(e.data);
+            }
+          };
+          denoisedRecorder.onstop = () => {
+            denoisedBlob = new Blob(denoisedBlobs);
+            denoisedBlobUrl = URL.createObjectURL(denoisedBlob);
+            denoisedAudio.src = denoisedBlobUrl;
+          };
+          denoisedRecorder.start();
+
+          console.log("recording...");
+        }
+        function cleanLastRecord() {
+          rawAudio.src = "";
+          URL.revokeObjectURL(rawBlobUrl);
+          rawBlobUrl = null;
+          rawBlob = null;
+          rawRecorder = null;
+          rawBlobs = [];
+
+          denoisedAudio.src = "";
+          URL.revokeObjectURL(denoisedBlobUrl);
+          denoisedBlobUrl = null;
+          denoisedBlob = null;
+          denoisedRecorder = null;
+          denoisedBlobs = [];
+        }
+
+        function stopRecord() {
+          rawRecorder.stop();
+          denoisedRecorder.stop();
+        }
+      };
+      window.onunload = () => {
+        ns.stop();
+      };
+    </script>
+  </body>
+</html>

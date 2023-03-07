@@ -24,7 +24,7 @@ if [ ! -f ".libs/librnnoise.so" ]; then
 fi
 
 # build wasm target
-emcc -s MALLOC=emmalloc -s ALLOW_MEMORY_GROWTH=1 -s ENVIRONMENT="worker" -s EXPORT_ES6=1 -s USE_ES6_IMPORT_META=1 -s MODULARIZE=1 -s SINGLE_FILE=1 -s WASM_ASYNC_COMPILATION=0 -s EXPORT_NAME=${EXPORT_NAME} -s EXPORTED_FUNCTIONS="${EXPORTED_FUNCTIONS}" .libs/librnnoise.so -o ${TARGET_NAME}
+emcc -g2 -s MALLOC=emmalloc -s ALLOW_MEMORY_GROWTH=1 -s ENVIRONMENT="web,worker" -s EXPORT_ES6=1 -s USE_ES6_IMPORT_META=1 -s MODULARIZE=1 -s SINGLE_FILE=1 -s WASM_ASYNC_COMPILATION=0 -s EXPORT_NAME=${EXPORT_NAME} -s EXPORTED_FUNCTIONS="${EXPORTED_FUNCTIONS}" .libs/librnnoise.so -o ${TARGET_NAME}
 
 # check if target file exists
 if [ ! -f ${TARGET_NAME} ]; then

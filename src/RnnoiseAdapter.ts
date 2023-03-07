@@ -1,4 +1,5 @@
-import initRNNoiseModule from "../build/rnnoise";
+// @ts-ignore
+import createRNNWasmModuleSync from "../build/rnnoise";
 
 // RnnoiseModule API
 export interface RnnoiseModule extends EmscriptenModule {
@@ -25,14 +26,18 @@ export class RnnoiseAdapter {
 
   constructor() {
     try {
-      this._rnnoiseModule = initRNNoiseModule() as RnnoiseModule;
+      this._rnnoiseModule = createRNNWasmModuleSync() as RnnoiseModule;
 
       this._rnnoiseBuffer = this._rnnoiseModule._malloc(RNNOISE_BUFFER_SIZE);
       this._rnnoiseBufferIndex = this._rnnoiseBuffer >> 2;
+      if (!this._rnnoiseBuffer) {
+        throw Error("rnnoise module malloc error");
+      }
 
       this._rnnoiseContext = this._rnnoiseModule._rnnoise_create();
     } catch (e) {
       this.clean();
+      throw e;
     }
   }
 
@@ -51,7 +56,7 @@ export class RnnoiseAdapter {
 
     // convert 32-bit raw samples to 16-bit for rnnoise
     for (let i = 0; i < RNNOISE_SAMPLE_NUM; ++i) {
-      this._rnnoiseModule.HEAP32[this._rnnoiseBufferIndex + i] = bit_32_to_16(
+      this._rnnoiseModule.HEAPF32[this._rnnoiseBufferIndex + i] = bit_32_to_16(
         frame[i]
       );
     }
@@ -64,7 +69,7 @@ export class RnnoiseAdapter {
     // convert 16-bit denoised samples to 32-bit and copy back
     for (let i = 0; i < RNNOISE_SAMPLE_NUM; ++i) {
       frame[i] = bit_16_to_32(
-        this._rnnoiseModule.HEAP[this._rnnoiseBufferIndex + i]
+        this._rnnoiseModule.HEAPF32[this._rnnoiseBufferIndex + i]
       );
     }
   }
